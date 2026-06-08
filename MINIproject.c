@@ -9,6 +9,8 @@
 
 char canvas[ROWS][COLS];
 
+//Day 1
+
 typedef enum
 {
     SHAPE_CIRCLE,
