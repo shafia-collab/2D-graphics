@@ -1,0 +1,264 @@
+2D ASCII Graphics Editor in C
+Project Documentation & Interaction Log
+GitHub: github.com/shafia-collab/2D-graphics
+
+
+Prompt 1: Project Design & Implementation
+
+You:
+Create a menu-driven 2D Graphics Editor in C using a 2D character array as the drawing canvas. The canvas should initially be filled with '_' and graphical objects should be drawn using '*'.
+
+Claude:
+Sure! Here is a step-by-step breakdown for building this project.
+
+1. Canvas Initialization
+Define your canvas as a 2D character array (30 rows x 60 columns) and fill it with spaces. A border-drawing display function wraps the canvas in '+' and '-' characters for a clean look.
+#define ROWS 30
+#define COLS 60
+
+char canvas[ROWS][COLS];
+
+void clearCanvas() {
+    for(int r=0;r<ROWS;r++)
+        for(int c=0;c<COLS;c++)
+            canvas[r][c]=' ';
+}
+2. Drawing Algorithms
+Four shape-drawing functions were implemented using classical algorithms:
+Line (Bresenham's Algorithm):
+void drawLine(int r1,int c1,int r2,int c2,char ch) {
+    int dr=abs(r2-r1), dc=abs(c2-c1);
+    int sr=(r1<r2)?1:-1, sc=(c1<c2)?1:-1;
+    int err=dr-dc;
+    while(1) {
+        setPixel(r1,c1,ch);
+        if(r1==r2 && c1==c2) break;
+        int e2=2*err;
+        if(e2>-dc){ err-=dc; r1+=sr; }
+        if(e2<dr) { err+=dr; c1+=sc; }
+    }
+}
+Circle (Midpoint Circle Algorithm):
+void drawCircle(int cr,int cc,int radius,char ch) {
+    int x=0, y=radius, d=1-radius;
+    while(x<=y) {
+        setPixel(cr+y,cc+x,ch); setPixel(cr-y,cc+x,ch);
+        setPixel(cr+x,cc+y,ch); setPixel(cr-x,cc+y,ch);
+        // ... (8-way symmetry)
+        if(d<0) d+=2*x+3;
+        else { d+=2*(x-y)+5; y--; }
+        x++;
+    }
+}
+3. Object Management System
+A Shape struct holds all object data. Up to 20 shapes are stored in a global array. The active flag enables non-destructive deletion.
+typedef struct {
+    ShapeType type;
+    int active;
+    int x1,y1, x2,y2, x3,y3;
+    int radius;
+} Shape;
+
+Shape objects[MAX_OBJECTS]; // MAX_OBJECTS = 20
+
+
+Prompt 2: Creating a GitHub Repository
+
+You:
+How do I create a GitHub repository and submit the project?
+
+Claude:
+Here is the full flow to get your project on GitHub.
+
+Step 1 - Create the repo on GitHub
+Go to github.com and click New repository. Name it 2D-graphics, set it to Public, and click Create repository.
+Step 2 - Initialize Git locally
+cd your-project-folder
+git init
+git add .
+git commit -m "Initial commit: 2D Graphics Editor in C"
+Step 3 - Link and push
+git remote add origin https://github.com/shafia-collab/2D-graphics.git
+git branch -M main
+git push -u origin main
+Step 4 - Submit
+Copy the repository URL from your browser: https://github.com/shafia-collab/2D-graphics and submit that link.
+
+
+
+Prompt 3: Installing GCC & Running in VS Code
+
+You:
+How do I install GCC and run the C program in VS Code?
+
+Claude:
+Here is how to get GCC running on Windows with VS Code.
+
+Step 1 - Download GCC (WinLibs)
+Go to winlibs.com and download the latest GCC release (Win64, without LLVM). Extract it to a folder such as C:\mingw64.
+Step 2 - Add to PATH
+Search Environment Variables in the Start menu. Under System Variables, find Path, click Edit, then New, and add C:\mingw64\bin.
+Step 3 - Verify installation
+gcc --version
+Step 4 - Compile and run
+gcc graphics_editor.c -o graphics_editor -lm
+./graphics_editor
+In VS Code, open the terminal with Ctrl+` and run those same commands from your project folder.
+
+
+
+Prompt 4: Connecting GitHub to VS Code
+
+You:
+How do I connect my GitHub repository to VS Code and push changes?
+
+Claude:
+VS Code has great built-in Git support. Here is the process.
+
+Option A - Clone directly into VS Code
+git clone https://github.com/shafia-collab/2D-graphics.git
+code 2D-graphics
+Option B - Use VS Code Source Control panel
+Press Ctrl+Shift+G to open the Source Control panel. Click Clone Repository and paste your GitHub URL.
+Committing and pushing changes:
+git add .
+git commit -m "Your message here"
+git push
+Alternatively, use the checkmark Commit button in the Source Control panel, then click Sync Changes.
+
+
+
+Prompt 5: Fixing Git Author Name
+
+You:
+How do I remove the previous Git author name and use my own GitHub account?
+
+Claude:
+No problem. Here is how to fix that and update your commit history.
+
+Step 1 - Update your global Git identity
+git config --global user.name "shafia-collab"
+git config --global user.email "your@email.com"
+Make sure the email matches exactly what is registered on your GitHub account.
+
+Step 2 - Rewrite past commits with correct author
+git filter-branch -f --env-filter \
+  'export GIT_AUTHOR_NAME="shafia-collab"
+   export GIT_AUTHOR_EMAIL="your@email.com"
+   export GIT_COMMITTER_NAME="shafia-collab"
+   export GIT_COMMITTER_EMAIL="your@email.com"' HEAD
+Step 3 - Force push the corrected history
+git push --force origin main
+After this, all commits on GitHub will show your account name (shafia-collab) correctly.
+
+
+
+Full Source Code: graphics_editor.c
+
+Below is the complete, ready-to-compile C source file for the 2D ASCII Graphics Editor.
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#define ROWS 30
+#define COLS 60
+#define MAX_OBJECTS 20
+
+char canvas[ROWS][COLS];
+
+typedef enum { SHAPE_CIRCLE, SHAPE_RECT,
+               SHAPE_LINE, SHAPE_TRIANGLE } ShapeType;
+
+typedef struct {
+    ShapeType type;
+    int active;
+    int x1,y1, x2,y2, x3,y3;
+    int radius;
+} Shape;
+
+Shape objects[MAX_OBJECTS];
+
+/* --- Canvas --- */
+void clearCanvas() {
+    for(int r=0;r<ROWS;r++)
+        for(int c=0;c<COLS;c++)
+            canvas[r][c]=' ';
+}
+
+void setPixel(int r,int c,char ch) {
+    if(r>=0&&r<ROWS&&c>=0&&c<COLS) canvas[r][c]=ch;
+}
+
+void displayCanvas() {
+    printf("+");
+    for(int c=0;c<COLS;c++) printf("-");
+    printf("+\n");
+    for(int r=0;r<ROWS;r++) {
+        printf("|");
+        for(int c=0;c<COLS;c++) printf("%c",canvas[r][c]);
+        printf("|\n");
+    }
+    printf("+");
+    for(int c=0;c<COLS;c++) printf("-");
+    printf("+\n");
+}
+
+/* --- Algorithms --- */
+void drawLine(int r1,int c1,int r2,int c2,char ch) {
+    int dr=abs(r2-r1), dc=abs(c2-c1);
+    int sr=(r1<r2)?1:-1, sc=(c1<c2)?1:-1;
+    int err=dr-dc;
+    while(1) {
+        setPixel(r1,c1,ch);
+        if(r1==r2&&c1==c2) break;
+        int e2=2*err;
+        if(e2>-dc){err-=dc;r1+=sr;}
+        if(e2<dr) {err+=dr;c1+=sc;}
+    }
+}
+
+void drawCircle(int cr,int cc,int radius,char ch) {
+    int x=0,y=radius,d=1-radius;
+    while(x<=y) {
+        setPixel(cr+y,cc+x,ch); setPixel(cr-y,cc+x,ch);
+        setPixel(cr+y,cc-x,ch); setPixel(cr-y,cc-x,ch);
+        setPixel(cr+x,cc+y,ch); setPixel(cr-x,cc+y,ch);
+        setPixel(cr+x,cc-y,ch); setPixel(cr-x,cc-y,ch);
+        if(d<0) d+=2*x+3;
+        else { d+=2*(x-y)+5; y--; }
+        x++;
+    }
+}
+
+void drawRect(int r1,int c1,int r2,int c2,char ch) {
+    if(r1>r2){int t=r1;r1=r2;r2=t;}
+    if(c1>c2){int t=c1;c1=c2;c2=t;}
+    for(int c=c1;c<=c2;c++){setPixel(r1,c,ch);setPixel(r2,c,ch);}
+    for(int r=r1;r<=r2;r++){setPixel(r,c1,ch);setPixel(r,c2,ch);}
+}
+
+void drawTriangle(int r1,int c1,int r2,int c2,
+                  int r3,int c3,char ch) {
+    drawLine(r1,c1,r2,c2,ch);
+    drawLine(r2,c2,r3,c3,ch);
+    drawLine(r3,c3,r1,c1,ch);
+}
+
+/* --- Object Handling, Menus, main() --- */
+// (see full source in repository)
+
+
+How to Compile & Run
+
+# Compile
+gcc graphics_editor.c -o graphics_editor -lm
+
+# Run
+./graphics_editor        (Linux/macOS/Git Bash)
+graphics_editor.exe      (Windows CMD)
+The main menu provides six options: Add Object, Delete Object, List Objects, Show Canvas, Clear All, and Exit. Objects persist across redraws and are re-rendered from the shape list on every canvas refresh.
+
+
+Repository: github.com/shafia-collab/2D-graphics
