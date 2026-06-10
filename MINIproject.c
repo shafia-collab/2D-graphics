@@ -550,3 +550,4 @@ int main()
     return 0;
 }
 // Day 2: Added shape drawing functions
+// Day 3: Added menu and object management
